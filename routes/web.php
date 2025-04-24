@@ -12,6 +12,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/focus', fn () => Inertia::render('Focus'))->name('focus');
     Route::post('/focus-sessions', [FocusSessionController::class, 'store']);
     Route::get('/history', [FocusSessionController::class, 'index'])->name('history');
+    Route::get('/focus-form', fn () => Inertia::render('FocusForm'))->name('focus-form');
+
 });
 
 require __DIR__.'/settings.php';

@@ -10,17 +10,21 @@ use Illuminate\Support\Facades\Auth;
 class FocusSessionController extends Controller
 {
     public function store(Request $request)
-{
-    $data = $request->validate([
-        'duration_minutes' => 'required|integer|min:1',
-        'started_at' => 'required|date',
-        'ended_at' => 'required|date|after:started_at',
-    ]);
-
-    $session = $request->user()->focusSessions()->create($data);
-
-    return response()->json(['message' => 'Sesi disimpan', 'data' => $session]);
-}
+    {
+        $data = $request->validate([
+            'duration_minutes' => 'required|integer|min:1',
+            'started_at' => 'required|date',
+            'ended_at' => 'required|date|after:started_at',
+            'category' => 'nullable|string|max:255',
+            'activity' => 'nullable|string|max:255',
+        ]);
+    
+        $data['user_id'] = $request->user()->id;
+    
+        $session = FocusSession::create($data);
+    
+        return response()->json(['message' => 'Sesi disimpan', 'data' => $session]);
+    }
 
 public function index()
 {
