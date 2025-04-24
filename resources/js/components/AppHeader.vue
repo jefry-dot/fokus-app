@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import { MenuIcon, XIcon, LogOutIcon, SunIcon } from 'lucide-vue-next';
+import { MenuIcon, XIcon, LogOutIcon, SunIcon, MoonIcon, UserIcon, SettingsIcon } from 'lucide-vue-next';
+import { useDark, useToggle } from '@vueuse/core';
 
 const isMobileMenuOpen = ref(false);
+const isDropdownOpen = ref(false);
+
 const logoutForm = useForm({});
 const handleLogout = () => logoutForm.post('/logout');
 
+// Navigasi utama
 const navItems = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Focus', href: '/focus' },
-  { title: 'Projects', href: '/projects' },
+  { title: 'History', href: '/history' },
 ];
+
+// Theme toggle
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
 
 const currentPath = computed(() => window.location.pathname);
 </script>
@@ -22,7 +30,7 @@ const currentPath = computed(() => window.location.pathname);
       <div class="flex h-full items-center justify-between">
         <!-- Logo -->
         <Link href="/dashboard" class="flex items-center gap-2">
-          <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">MyApp</span>
+          <span class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">MyApp</span>
         </Link>
 
         <!-- Desktop Navigation -->
@@ -35,14 +43,14 @@ const currentPath = computed(() => window.location.pathname);
               class="relative flex items-center px-4 py-2 text-sm font-medium transition-all rounded-lg"
               :class="[
                 currentPath === item.href 
-                  ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-300 dark:bg-neutral-800'
+                  ? 'text-cyan-600 bg-cyan-50 dark:text-cyan-300 dark:bg-neutral-800'
                   : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800',
               ]"
             >
               {{ item.title }}
               <span 
                 v-if="currentPath === item.href"
-                class="absolute -bottom-[17px] h-[2px] w-4/5 bg-indigo-600 dark:bg-indigo-400"
+                class="absolute -bottom-[17px] h-[2px] w-4/5 bg-cyan-600 dark:bg-cyan-400"
               />
             </Link>
           </div>
@@ -50,20 +58,40 @@ const currentPath = computed(() => window.location.pathname);
 
         <!-- Right Side -->
         <div class="flex items-center gap-4">
-          <!-- Theme toggle (optional) -->
-          <button class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">
-            <SunIcon class="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
+          <!-- Theme toggle -->
+          <button @click="toggleDark()" class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800">
+            <SunIcon v-if="!isDark" class="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
+            <MoonIcon v-else class="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
           </button>
 
-          <!-- Logout button -->
-          <button
-            @click="handleLogout"
-            class="group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all bg-red-500/10 text-red-600 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-500/20"
-            :disabled="logoutForm.processing"
-          >
-            <LogOutIcon class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            <span class="hidden sm:block">Sign Out</span>
-          </button>
+          <!-- Akun Dropdown (desktop only) -->
+          <div class="relative hidden lg:block">
+            <button
+              @click="isDropdownOpen = !isDropdownOpen"
+              class="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+            >
+              <UserIcon class="h-4 w-4" />
+              Akun
+            </button>
+            <div
+              v-show="isDropdownOpen"
+              class="absolute right-0 mt-2 w-40 rounded-lg border bg-white shadow dark:bg-neutral-800 dark:border-neutral-700 transition ease-in-out duration-200"
+            >
+              <Link href="/profile" class="block px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                <UserIcon class="h-4 w-4 inline-block mr-2" /> Profil
+              </Link>
+              <Link href="/settings" class="block px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                <SettingsIcon class="h-4 w-4 inline-block mr-2" /> Pengaturan
+              </Link>
+              <button
+                @click="handleLogout"
+                class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900"
+                :disabled="logoutForm.processing"
+              >
+                <LogOutIcon class="h-4 w-4 inline-block mr-2" /> Keluar
+              </button>
+            </div>
+          </div>
 
           <!-- Mobile Menu Button -->
           <button
@@ -78,20 +106,35 @@ const currentPath = computed(() => window.location.pathname);
     </div>
 
     <!-- Mobile Navigation -->
-    <div v-show="isMobileMenuOpen" class="lg:hidden border-b dark:border-neutral-800">
-      <div class="px-4 py-3 space-y-1">
-        <Link
-          v-for="item in navItems"
-          :key="item.title"
-          :href="item.href"
-          class="block px-3 py-2 rounded-lg font-medium"
-          :class="currentPath === item.href 
-            ? 'bg-indigo-50 text-indigo-600 dark:bg-neutral-800 dark:text-indigo-400' 
-            : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'"
-        >
-          {{ item.title }}
-        </Link>
+    <transition name="fade-slide">
+      <div v-show="isMobileMenuOpen" class="lg:hidden border-b dark:border-neutral-800">
+        <div class="px-4 py-3 space-y-1">
+          <Link
+            v-for="item in navItems"
+            :key="item.title"
+            :href="item.href"
+            class="block px-3 py-2 rounded-lg font-medium"
+            :class="currentPath === item.href 
+              ? 'bg-cyan-50 text-cyan-600 dark:bg-neutral-800 dark:text-cyan-400' 
+              : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'"
+          >
+            {{ item.title }}
+          </Link>
+        </div>
       </div>
-    </div>
+    </transition>
   </header>
 </template>
+
+<style scoped>
+/* Animasi buka mobile nav */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>
